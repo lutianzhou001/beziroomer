@@ -1,3 +1,5 @@
 # xls
-.xls
-./idea
+*.xls
+.idea/
+.DS_Store
+venv/
