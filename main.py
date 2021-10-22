@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import math
 from urllib import request
 from bs4 import BeautifulSoup
 import re
@@ -77,7 +80,9 @@ def write_to_excel(path, value):
     new_workbook.save(path)
 
 
-for i in range(1, 7):
+houses = []
+
+for i in range(1, 2):
     url = url_1 + str(i) + url_2
     print('第' + str(i) + '页' + '数据: ' + url)
     headers = {
@@ -119,7 +124,7 @@ for i in range(1, 7):
                 if re.match('.', feature.text) is not None and re.match('朝', feature.text) is None:
                     area = feature.text[0:len(feature.text) - 1]
                     if re.match('约', feature.text):
-                        area = feature.text[1:len(feature.text)-1]
+                        area = feature.text[1:len(feature.text) - 1]
                 if re.match('朝', feature.text) is not None:
                     face = feature.text
                     break
@@ -139,12 +144,40 @@ for i in range(1, 7):
                     office_cord = get_cord_of_address(office_address)
                     time_bicycling = get_time_between_destinatios(home_cord, office_cord)
             print([house_href, house_price, home_address, home_cord, office_cord, time_bicycling, room, face,
-                            area, gender,
-                            c11n, job])
-            f = 0.20*f_of_area(area, a_min_threshold, a_max_threshold) + 0.5*f_of_price(house_price, p_threshold) + 0.3*f_of_time(
+                   area, gender,
+                   c11n, job])
+            f = 0.20 * f_of_area(area, a_min_threshold, a_max_threshold) + 0.5 * f_of_price(house_price,
+                                                                                            p_threshold) + 0.3 * f_of_time(
                 time_bicycling, t_threshold)
             print('正在写入数据')
             write_to_excel('./ziroom.xls',
                            [house_href, house_price, home_address, home_cord, office_cord, time_bicycling, room, face,
                             area, gender,
                             c11n, job, f])
+            house = [house_href, house_price, home_address, home_cord, office_cord, time_bicycling, room, face,
+                     area, gender,
+                     c11n, job, f]
+            houses.append(house)
+# 敏感性分析
+# if some condition changes, will the result change at the same time?
+# price change
+# rerange houses
+
+minf = float('inf')
+min_sen = float('inf')
+for house in houses:
+    if house[12] < minf:
+        minf = house[12]
+        minp = house[1]
+
+for house in houses:
+    delta = house[12] - minf
+    if delta > 0:
+        print(minp)
+        C = f_of_price(minp, p_threshold) - f_of_price(house[1], p_threshold) - delta / 0.50
+        p_threshold_new = math.sqrt(-100 * (minp * minp - house[1] * house[1]) / C)
+        p_sen = p_threshold_new / float(p_threshold) - 1
+        if p_sen < min_sen:
+            min_sen = p_sen
+
+print(min_sen)
