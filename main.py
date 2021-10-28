@@ -82,7 +82,7 @@ def write_to_excel(path, value):
 
 houses = []
 
-for i in range(1, 2):
+for i in range(1, 8):
     url = url_1 + str(i) + url_2
     print('第' + str(i) + '页' + '数据: ' + url)
     headers = {
@@ -163,21 +163,33 @@ for i in range(1, 2):
 # price change
 # rerange houses
 
-minf = float('inf')
+maxf = float(0)
 min_sen = float('inf')
+minp = float('inf')
 for house in houses:
-    if house[12] < minf:
-        minf = house[12]
+    if house[12] > maxf:
+        maxf = house[12]
         minp = house[1]
 
 for house in houses:
-    delta = house[12] - minf
-    if delta > 0:
-        print(minp)
-        C = f_of_price(minp, p_threshold) - f_of_price(house[1], p_threshold) - delta / 0.50
-        p_threshold_new = math.sqrt(-100 * (minp * minp - house[1] * house[1]) / C)
-        p_sen = p_threshold_new / float(p_threshold) - 1
-        if p_sen < min_sen:
-            min_sen = p_sen
+    delta = maxf - house[12]
+    if delta > 0 and minp < house[1]:
+        squared_ptn = 100 * (minp * minp - house[1] * house[1]) / (100 / float(p_threshold) / float(p_threshold) * (minp * minp - house[1] * house[1]) + delta / 0.50)
+        if squared_ptn < 0:
+            continue
+        else:
+            p_threshold_new = math.sqrt(squared_ptn)
+            p_sen = abs(p_threshold_new - float(p_threshold)) / float(p_threshold)
+            if p_sen < min_sen:
+                min_sen = p_sen
+    if delta > 0 and minp > house[1]:
+        squared_ptn = 100 * (house[1] * house[1]-minp * minp) / (100 / float(p_threshold) / float(p_threshold) * (house[1] * house[1]-minp * minp) - delta / 0.50)
+        if squared_ptn < 0:
+            continue
+        else:
+            p_threshold_new = math.sqrt(squared_ptn)
+            p_sen = abs(p_threshold_new - float(p_threshold)) / float(p_threshold)
+            if p_sen < min_sen:
+                min_sen = p_sen
 
 print(min_sen)
